@@ -57,7 +57,7 @@ And userStore$.data$.getKey("0.profile.city") returns "WAW"
 
 - Property access naming: each state property `k` is exposed as `k$` (spec's `counter$`, `data$`), each a full value cell (S1). Rejected: raw property names — they would collide with the whole-state methods and lose the cell identity.
 - Whole-state `set` applies per changed key so untouched/unmodified keys stay silent (S2). Rejected: bulk-fire every key — violates the atomic guarantee.
-- Whole-state `subscribe` fires once per property change (current, previous) snapshots (S3); store hook-call re-renders on any property change; property hook re-renders only for its key (S5).
+- Whole-state `subscribe` fires once per store-level operation (set / reset / single-key write) with (current, previous) whole-state snapshots (S2, S3) — a multi-key `set` or `reset` is one operation, one notification, while each actually-changed key cell also fires once; store hook-call re-renders on any property change; property hook re-renders only for its key (S5).
 - Initializer form mirrors value (per-instance fresh state), enabling SSR/test isolation (S1 witness uses the initializer form).
 - `reset` restores every property to initial (S4); `getInitial` returns the complete initial state object at any time.
 - Store notification pairs reported as plain state snapshots (not cell tuples) because the store's own subscribers observe whole state; the per-key tuples remain owned by the value cells.

@@ -56,17 +56,19 @@ describe("S5 — store and property hooks scope re-renders", () => {
     expect(counterRenders).toBe(2);
     expect(screen.getByText("counter:5")).toBeInTheDocument();
 
-    // A multi-key whole-store set is one operation — exactly one re-render for the
-    // whole-store hook, one for the counter hook (its key actually changed).
+    // A multi-key whole-store replacement is one operation — exactly one
+    // re-render for the whole-store hook, one for the counter hook (its key
+    // actually changed).
+    const emptiedData: User[] = [];
     act(() => {
-      userStore$.set({ data: [], counter: 6 });
+      userStore$.set({ data: emptiedData, counter: 6 });
     });
     expect(wholeRenders).toBe(4);
     expect(counterRenders).toBe(3);
 
-    // A silent operation re-renders nobody.
+    // An equal-valued replacement re-renders nobody.
     act(() => {
-      userStore$.set({ counter: 6 });
+      userStore$.set({ data: emptiedData, counter: 6 });
     });
     expect(wholeRenders).toBe(4);
     expect(counterRenders).toBe(3);

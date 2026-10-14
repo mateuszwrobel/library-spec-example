@@ -15,9 +15,10 @@ export type { Store } from "./types";
  * Each state property `k` is exposed as `k$`, a full value cell (S1). The
  * store itself is callable as a React hook re-rendering on any property
  * change, while property hooks stay scoped to their key (S5). Whole-store
- * `set` applies per changed key — untouched and equal-valued keys stay
- * silent at every level (S2). `InferState` re-exports land here from utils
- * once the helper projections exist (ADR-0003).
+ * `set` replaces the entire state, applied per changed key — equal-valued
+ * keys stay silent at every level (S2); patch semantics belong to the
+ * actions lane's apply protocol, not here. `InferState` re-exports land
+ * here from utils once the helper projections exist (ADR-0003).
  */
 export function store<T extends object>(stateOrInitializer: T | (() => T)): Store<T> {
   return createStore<T>(

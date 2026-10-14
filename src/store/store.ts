@@ -57,10 +57,10 @@ export function createStore<T extends object>(initialState: T): Store<T> {
 
   const getInitial = (): T => initialState;
 
-  const set = (patch: Partial<T>): void => {
+  const set = (next: T): void => {
     batched(() => {
       for (const key of keys) {
-        if (Object.hasOwn(patch, key)) cells[key].set(patch[key]);
+        if (Object.hasOwn(next, key)) cells[key].set(next[key]);
       }
     });
   };

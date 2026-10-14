@@ -23,11 +23,12 @@ export type Store<T extends object> = Brand<T> & {
   /** The complete initial state object, pristine after any mutation (S4). */
   getInitial(): T;
   /**
-   * Applies per changed key (S2): keys absent from the patch or holding a
+   * Replaces the entire state (S2), applied per changed key: keys holding a
    * SameValueZero-equal value stay silent at every level; store-level
-   * subscribers fire exactly once for the whole operation.
+   * subscribers fire exactly once for the whole operation. Patch application
+   * belongs to the actions lane's apply protocol, not to the store.
    */
-  set(patch: Partial<T>): void;
+  set(next: T): void;
   /** Restores every property to initial, one store-level notification (S4). */
   reset(): void;
   /**

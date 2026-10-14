@@ -66,8 +66,8 @@ describe("S1 — property cells are full value primitives", () => {
   });
 });
 
-describe("S2 — whole-store set applies per changed key", () => {
-  it("changed key cells each fire once with (new, old); untouched keys stay silent; the store view fires exactly once per store-level operation", () => {
+describe("S2 — whole-store set replaces the state and applies per changed key", () => {
+  it("changed key cells each fire once with (new, old); SameValueZero-equal keys stay silent; the store view fires exactly once per operation", () => {
     const userStore$ = store<UserState>(() => ({ data: [], counter: 0 }));
     const dataSpy = vi.fn();
     const counterSpy = vi.fn();
@@ -78,11 +78,12 @@ describe("S2 — whole-store set applies per changed key", () => {
 
     const u1 = makeUser(1, "KRK");
     const u2 = makeUser(2, "LDN");
-    userStore$.set({ data: [u1, u2], counter: 3 });
+    const nextData = [u1, u2];
+    userStore$.set({ data: nextData, counter: 3 });
 
     expect(userStore$.get()).toEqual({ data: [u1, u2], counter: 3 });
     expect(dataSpy).toHaveBeenCalledTimes(1);
-    expect(dataSpy).toHaveBeenCalledWith([u1, u2], []);
+    expect(dataSpy).toHaveBeenCalledWith(nextData, []);
     expect(counterSpy).toHaveBeenCalledTimes(1);
     expect(counterSpy).toHaveBeenCalledWith(3, 0);
     expect(storeSpy).toHaveBeenCalledTimes(1);
@@ -92,16 +93,43 @@ describe("S2 — whole-store set applies per changed key", () => {
     counterSpy.mockClear();
     storeSpy.mockClear();
 
-    // Partial patch — only the named key fires; SameValueZero-equal writes stay silent.
-    userStore$.set({ counter: 3 });
+    // Full replacement whose data is SameValueZero-equal — that key's cell
+    // stays silent; the store view still fires exactly once for the operation.
+    userStore$.set({ data: nextData, counter: 4 });
+    expect(dataSpy).not.toHaveBeenCalled();
+    expect(counterSpy).toHaveBeenCalledTimes(1);
+    expect(counterSpy).toHaveBeenCalledWith(4, 3);
+    expect(storeSpy).toHaveBeenCalledTimes(1);
+    expect(storeSpy).toHaveBeenCalledWith({ data: nextData, counter: 4 }, { data: nextData, counter: 3 });
+
+    dataSpy.mockClear();
+    counterSpy.mockClear();
+    storeSpy.mockClear();
+
+    // Fully-equal replacement — total silence, snapshot identity untouched.
+    const identity = userStore$.get();
+    userStore$.set({ data: nextData, counter: 4 });
     expect(dataSpy).not.toHaveBeenCalled();
     expect(counterSpy).not.toHaveBeenCalled();
     expect(storeSpy).not.toHaveBeenCalled();
-    expect(userStore$.get()).toEqual({ data: [u1, u2], counter: 3 });
+    expect(userStore$.get()).toBe(identity);
+  });
 
-    userStore$.set({ counter: 4 });
+  it("untyped JS callers missing keys are guarded — absent keys are not written, present keys apply", () => {
+    const initialData = [makeUser(1, "KRK")];
+    const userStore$ = store<UserState>(() => ({ data: initialData, counter: 0 }));
+    const dataSpy = vi.fn();
+    const storeSpy = vi.fn();
+    userStore$.data$.subscribe(dataSpy);
+    userStore$.subscribe(storeSpy);
+
+    // Models a JavaScript caller bypassing the pinned full-state signature.
+    userStore$.set({ counter: 2 } as unknown as UserState);
+
+    expect(dataSpy).not.toHaveBeenCalled();
+    expect(userStore$.get()).toEqual({ data: [{ id: 1, profile: { city: "KRK" } }], counter: 2 });
     expect(storeSpy).toHaveBeenCalledTimes(1);
-    expect(storeSpy).toHaveBeenCalledWith({ data: [u1, u2], counter: 4 }, { data: [u1, u2], counter: 3 });
+    expect(storeSpy).toHaveBeenCalledWith({ data: initialData, counter: 2 }, { data: initialData, counter: 0 });
   });
 });
 
@@ -238,6 +266,8 @@ describe("type safety — names outside the state shape fail at compile time", (
       void userStore$.nope$;
       // @ts-expect-error — set rejects keys outside the state shape
       userStore$.set({ nope: 1 });
+      // @ts-expect-error — set takes the whole state, not a patch
+      userStore$.set({ counter: 3 });
       // @ts-expect-error — counter$ is a ValueCell<number>; strings are rejected
       userStore$.counter$.set("seven");
       // @ts-expect-error — the store generic stays readable as its state shape
