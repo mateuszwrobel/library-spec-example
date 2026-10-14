@@ -4,6 +4,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@paker/value": "/src/value/index.ts",
+      "@paker/store": "/src/store/index.ts",
       "@paker/utils": "/src/utils/index.ts",
     },
   },
