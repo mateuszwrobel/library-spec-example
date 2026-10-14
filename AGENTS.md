@@ -1,18 +1,6 @@
 # AGENTS.md — agentic-coding template
 
-Generic agentic-engineering kit. Fill the `<PLACEHOLDER>` tokens below, then adapt + trim for this project.
-
-## Placeholders to fill
-
-- `<REPO_NAME>` — repository name
-- `<REPO_OWNER>` — owner/org
-- `<DEFAULT_BRANCH>` — default branch (default `main`)
-- `<LANGUAGE(S)>` — languages in this repo
-- `<TEST_COMMAND>` — test runner command
-- `<VERIFY_COMMAND>` — lint/typecheck command
-- `<CI_PROVIDER>` — CI provider (default GitHub Actions)
-- `<SUBAGENT_MODEL>` — model token subagents launch with (note: the global default model may differ and is NOT approved for subagents)
-- `<SECRET_SYNC_MECHANISM>` — how CI secrets sync (vault, manager, manual)
+Agentic-engineering kit for library-spec-example — placeholders filled for this project; trim sections as the project evolves.
 
 ## Subagents / delegation
 
@@ -20,7 +8,7 @@ ALWAYS delegate execution to subagents. Orchestrator gathers context, plans, del
 
 `.agents/agents/` ships `orchestrator` (primary — plans + delegates) and subagents `coder` (implementation), `code-verifier`, `reviewer`, `git-ops`, `ci-watcher`; execution is delegated to the subagents; the orchestrator stays in the main checkout.
 
-Subagents MUST be launched with an explicit approved model (`<SUBAGENT_MODEL>`).
+Subagents MUST be launched with an explicit approved model (`opencode/qwen3.8-flash`).
 
 When gathering project info, do not read all files at once — search the most probable location first, then expand only if needed.
 
@@ -72,22 +60,22 @@ Implementation details are derived from behavioral requirements — don't ask th
 ## Secrets management
 
 1. Secrets must never be committed to git
-2. Per-project secret sync: `<SECRET_SYNC_MECHANISM>`
-3. Support chosen CI provider's secret store: `<CI_PROVIDER>`
+2. Per-project secret sync: not needed — public repo, no CI secrets today
+3. Support chosen CI provider's secret store: GitHub Actions
 
 ## Git workflow
 
-Trunk-based development on `<DEFAULT_BRANCH>`. No long-lived branches, no PRs for normal work, never leave commits on a side branch.
+Trunk-based development on `main`. No long-lived branches, no PRs for normal work, never leave commits on a side branch.
 
-- **Hard rule: file edits happen in a git worktree created by the SUBAGENT performing the task** (detached HEAD from current `<DEFAULT_BRANCH>` — no branch created). The orchestrator stays in the main checkout — never move its working directory into a worktree, never edit or stage in the main checkout working tree.
+- **Hard rule: file edits happen in a git worktree created by the SUBAGENT performing the task** (detached HEAD from current `main` — no branch created). The orchestrator stays in the main checkout — never move its working directory into a worktree, never edit or stage in the main checkout working tree.
 - Reason: the main checkout is shared with parallel automation; a dirty working tree or index there breaks its commits and hooks.
-- Flow: `git worktree add --detach /path/to/wt-<task> <DEFAULT_BRANCH>` → work + commit there → land by `git merge --ff-only <commit-hash>` in the main checkout (history-only op) → push → `git worktree remove`. NO branches: never create, never leave, never delete — repo refs stay `<DEFAULT_BRANCH>`-only.
+- Flow: `git worktree add --detach /path/to/wt-<task> main` → work + commit there → land by `git merge --ff-only <commit-hash>` in the main checkout (history-only op) → push → `git worktree remove`. NO branches: never create, never leave, never delete — repo refs stay `main`-only.
 - **No hook bypass:** manipulating `core.hooksPath` or using `--no-verify` is FORBIDDEN — there is no code path with hooks skipped for normal commits. On commit-hook red: RERUN. On repeated hook-red with an isolation-proven PRE-EXISTING flake (identical assertion red at the same rate on the pre-fix base — cite the base hash): report, pause and ESCALATE — never bypass. Content stays full-proof gated either way because the pre-push hook runs the full verification on the pushed diff.
 - Programmatic commits use the repo's agreed helper if defined (per-crate pre-commit/pre-push hook table, if any).
 
 ## CI watching & reacting
 
-- Before/while working, check CI of `<DEFAULT_BRANCH>` and in-flight PRs: `scripts/watch-ci.sh --list`, `scripts/watch-ci.sh --watch <run-id>`.
+- Before/while working, check CI of `main` and in-flight PRs: `scripts/watch-ci.sh --list`, `scripts/watch-ci.sh --watch <run-id>`.
 - On failure: triage with `gh run view <run-id> --log-failed` (quote failing lines verbatim), fix, push, re-watch.
 - Watch waits ALWAYS get deadlines. Long watches/drives launch detached (`setsid nohup`, sentinel protocol — see `.agents/skills/long-drill/SKILL.md`).
 - Never run CI/watch retry loops as foreground in-tool-call loops.

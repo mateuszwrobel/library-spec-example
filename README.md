@@ -8,7 +8,7 @@ all internal/infrastructure references. Copy it into your own projects and adapt
 
 | Path | What it is |
 |------|------------|
-| `AGENTS.md` | Instructions template — fill the `<PLACEHOLDER>` tokens, then adapt + trim |
+| `AGENTS.md` | Project instructions (template placeholders filled) — adapt + trim as the project evolves |
 | `.agents/` | **Canonical, tool-agnostic content store** — single source of truth for all agent content |
 | `.agents/agents/` | Markdown agent definitions: `orchestrator` (primary — plans + delegates), `coder` (implementation), `code-verifier` (deep claim-verification), `reviewer` (peer code review), `git-ops` (commit/push only), `ci-watcher` (watch GitHub Actions runs, report-only) |
 | `.agents/skills/` | Authoring-skills kit, one directory per skill (`<id>/SKILL.md`): TDD workplan, long-drill discipline, modular design/planner/reviewer |
@@ -18,12 +18,12 @@ all internal/infrastructure references. Copy it into your own projects and adapt
 | `.opencode/agents/` | Symlinks → `.agents/agents/*.md` (opencode reads agents from here) |
 | `.opencode/commands/` | Symlinks → `.agents/commands/*.md` (opencode reads commands from here) |
 | `scripts/` | `watch-ci.sh` (watch a GitHub Actions run to terminal state) and `watch-git.sh` (observe a detached commit/push drive, restart when stuck/failed) |
-| `opencode.jsonc` | OpenCode project config — sets the default session agent to the shipped `orchestrator` primary |
+| `opencode.jsonc` | OpenCode project config — sets the default session agent to the shipped `orchestrator` primary and pins the session model |
 
 ## How to use
 
 1. Copy this tree into a new project.
-2. Fill the `<PLACEHOLDER>` tokens in `AGENTS.md`, then adapt + trim it for your project.
+2. Adapt + trim `AGENTS.md` for your project (this repo's copy has placeholders filled).
 3. Start opencode — the session defaults to the `orchestrator` primary agent (see `opencode.jsonc`).
 4. Edit content under `.agents/` — it is the canonical store. The `.opencode/` symlinks
    make opencode pick up agents and commands with zero copy: change
