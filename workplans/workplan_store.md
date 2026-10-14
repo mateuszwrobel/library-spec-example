@@ -2,9 +2,9 @@
 
 > Scenario card
 > **Name:** store
-> **Scenarios owned:** parent S1–S5, plus the Coverage gate's store-module slice
+> **Scenarios owned:** parent S1–S5
 > **Contracts exposed:** store contract (see API partial) — consumed by actions, rxjs adapter, utils, demo
-> **Contracts consumed:** value cell contract (V) — per-key cells are values
+> **Contracts consumed:** value cell contract (V) — per-key cells are values; utils branding convention (type-level only)
 > **Assumptions about siblings:** value cells deliver change-only notifications with per-key firing semantics; actions will receive this store's property cells directly in its factory argument; adapter/utils read the same property cells.
 
 ## Goal

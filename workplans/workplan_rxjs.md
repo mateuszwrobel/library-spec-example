@@ -2,9 +2,9 @@
 
 > Scenario card
 > **Name:** rxjs-adapter
-> **Scenarios owned:** parent R1–R5, plus the Coverage gate's adapter-module slice
+> **Scenarios owned:** parent R1–R5
 > **Contracts exposed:** adapter decorator contract (see API partial) — consumed by utils, demo
-> **Contracts consumed:** value cell contract (V), store contract (S), actions decorated-instance contract (A)
+> **Contracts consumed:** value cell contract (V), store contract (S), actions decorated-instance contract (A); utils branding convention (type-level only)
 > **Assumptions about siblings:** decorated instances keep their APIs and can be wrapped further; action methods called inside operators follow A's apply rule; utils reads the adapter's branded event types; the demo renders components reading adapter-preserved atomic hooks.
 
 ## Goal
@@ -51,7 +51,7 @@ Then state, action, subscription, and hook APIs behave as unwrapped
 - `skipOn(NAME)` is a stream-local terminator placed as an array entry: from its position downstream, the current run stops and nothing later executes; already-run upstream effects are irreversible (RxJS semantics respected); other runs and the named event's own handlers proceed (R3, R4). Rejected: whole-run rollback — impossible for side-effecting operators.
 - Event methods return `void`; observation happens through the wrapped primitive's subscriptions (no selector, no result handle). Rejected: returning the run's Observable — leaks RxJS into the API surface for consumers outside this adapter.
 - Concurrent same-event calls are independent runs (R4); no automatic dedupe or switchMap-between-runs policy — the author composes that inside the array if wanted. Rejected: built-in latest-wins — an opinion the spec doesn't state.
-- Only this module imports RxJS (ADR-002); `InferEvents`/`InferEventPayload` type projections must contain no RxJS types.
+- Only this module imports RxJS (ADR-0002); `InferEvents`/`InferEventPayload` type projections must contain no RxJS types.
 
 ## Assumptions
 
@@ -89,7 +89,7 @@ One behavior: event-to-operator-stream lifecycle (run construction, inter-run in
 
 | Behavior | Fits Existing Module | New Module | Reason |
 |---|---|---|---|
-| typed event streams | actions | `rxjs adapter` (this) | stream lifecycle is a distinct reason to change from the action apply protocol; ADR-002 confines the RxJS coupling here |
+| typed event streams | actions | `rxjs adapter` (this) | stream lifecycle is a distinct reason to change from the action apply protocol; ADR-0002 confines the RxJS coupling here |
 
 ### Internal Architecture
 

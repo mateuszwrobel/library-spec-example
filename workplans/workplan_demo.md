@@ -4,7 +4,7 @@
 > **Name:** demo-app
 > **Scenarios owned:** parent D1–D3
 > **Contracts exposed:** demo gallery page (component exploration surface: one view per spec example)
-> **Contracts consumed:** published entry contracts of value, store, actions, rxjs adapter (import strings from the spec; ADR-001 aliases)
+> **Contracts consumed:** published entry contracts of value, store, actions, rxjs adapter (import strings from the spec; ADR-0001 aliases)
 > **Assumptions about siblings:** composed instances (rxjs(actions(store(value)))) behave per R5/U6; the spec's exact example components render and react as written.
 
 ## Goal

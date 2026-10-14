@@ -2,9 +2,9 @@
 
 > Scenario card
 > **Name:** actions
-> **Scenarios owned:** parent A1–A7, plus the Coverage gate's actions-module slice
+> **Scenarios owned:** parent A1–A7
 > **Contracts exposed:** actions decorator contract (see API partial) — consumed by rxjs adapter, utils, demo
-> **Contracts consumed:** value cell contract (V), store contract (S) — the wrapped primitive
+> **Contracts consumed:** value cell contract (V), store contract (S) — the wrapped primitive; utils branding convention (type-level only)
 > **Assumptions about siblings:** wrapped primitives keep their full API under decoration; store property cells arrive in the factory argument as `$`-suffixed cells; utils reads this decorator's branded type; the adapter will decorate instances already wrapped by actions.
 
 ## Goal

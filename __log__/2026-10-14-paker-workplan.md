@@ -9,4 +9,4 @@
 }
 ```
 
-Authored behavior-first workplan set for the Paker state-management library spec (value, store, actions, rxjs adapter, utility types, demo app). One parent plan with full acceptance scenarios, dependency ledger, API/UI/Modularity partials; six lane sub-workplans with scenario cards; two ADRs (single package with scoped entry points; RxJS optional peer dependency). Middleware excluded per spec (post-MVP). No code changes — planning documents only.
+Authored behavior-first workplan set for the Paker state-management library spec (value, store, actions, rxjs adapter, utility types, demo app). One parent plan with full acceptance scenarios, dependency ledger, API/UI/Modularity partials; six lane sub-workplans with scenario cards; two ADRs (single package with scoped entry points; RxJS optional peer dependency). Middleware excluded per spec (post-MVP). No code changes — planning documents only. Reviewer round applied (ADR renames to repo convention + new ADR-0003, coverage/branding/ownership coherence fixes, MCP/docs descope recorded).

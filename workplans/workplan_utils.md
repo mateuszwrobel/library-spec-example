@@ -48,12 +48,12 @@ Then each returns identical inferred types
 
 ## Decisions
 
-- Branding contract: every wrapper's instance type carries the inner primitive's type identity structurally (a phantom brand each module adds to its return type), so `Infer*` helpers are conditional-type readers that unwrap any wrapper order. Defined once in `utils`; wrapper modules implement their side. Rejected: runtime metadata objects — type-only needs, zero runtime cost, and wrappers cannot smuggle values through generics that way. Rejected: independent per-entry `Infer` definitions — two owners of the same projection drift.
+- Branding contract: every wrapper's instance type carries the inner primitive's type identity structurally (a phantom brand each module adds to its return type), so `Infer*` helpers are conditional-type readers that unwrap any wrapper order. Defined once in `utils` (ADR-0003); wrapper modules implement their side. Rejected: runtime metadata objects — type-only needs, zero runtime cost, and wrappers cannot smuggle values through generics that way. Rejected: independent per-entry `Infer` definitions — two owners of the same projection drift.
 - Name parameters are constrained to inferred keys; an unknown name is a compile-time failure at the helper call, never `any` (U5). This is also the guarantee `forward` borrows in lanes A and R.
 - `InferActions` preserves async-ness: an async action reads as `(...) => Promise<void>` per A's return rule (U2 witness `loadUsers(): Promise<void>`); result helpers read the action method's return type.
 - Computed cells infer their derived data type via `InferValue` (U1 witness `total$` → number).
 - Helpers are re-exported from each primitive entry so the spec's import strings compile verbatim (parent decision restated).
-- Verification harness: compile-time assertions run inside vitest tests (type-only module has no runtime statements); wrong-name cases asserted via expect-compile-error mechanism or `@ts-expect-error` inline checks.
+- Type-level acceptance: every wrong usage must fail compilation and every expected resolution must be pinned exactly; the mechanism for asserting compile-failure (a compile-error harness or per-line compile-error directives) is the implementer's choice — the behavioral guarantee is what this plan binds.
 
 ## Assumptions
 
@@ -99,4 +99,4 @@ Type-level only — conditional/mapped types, zero runtime code. Nothing else fi
 
 ### Boundaries
 
-Imports no runtime code from any module; wrapper modules import only the brand shape (type-level) from here; coverage gate excludes this module (no runtime statements to cover) — recorded so the 100% gate is honest.
+Imports no runtime code from any module; wrapper modules import only the brand shape (type-level) from here; the parent's coverage gate records this module's exclusion (type-only, no runtime statements) — see parent Decisions.

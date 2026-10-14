@@ -2,7 +2,7 @@
 
 ## Goal
 
-As a React developer, I want to manage application state through a small set of composable, tree-shakable primitives and builders — `value`, `store`, `actions`, and an RxJS event adapter — so that each problem uses the right solution while the API stays standardized, fully type-safe, selector-free, and boilerplate-minimal. The observable outcome: every example in the Paker 1.0.0 specification compiles and behaves as documented (atomic re-renders, per-instance SSR isolation, typed actions and events, inferred utility types), proven by a demo app and a 100%-coverage gate on all library sources. Delivered as one TypeScript package with scoped entry points (ADR-001), middleware excluded per spec (post-MVP).
+As a React developer, I want to manage application state through a small set of composable, tree-shakable primitives and builders — `value`, `store`, `actions`, and an RxJS event adapter — so that each problem uses the right solution while the API stays standardized, fully type-safe, selector-free, and boilerplate-minimal. The observable outcome: every example in the Paker 1.0.0 specification compiles and behaves as documented (atomic re-renders, per-instance SSR isolation, typed actions and events, inferred utility types), proven by a demo app and a 100%-coverage gate on all library sources. Delivered as one TypeScript package with scoped entry points (ADR-0001), middleware excluded per spec (post-MVP).
 
 ## Acceptance Criteria
 
@@ -13,8 +13,8 @@ Scenarios below are owned exclusively by the lane named in their section header.
 ### Scenario: 100% coverage gate
 Given all library modules are implemented
 When the repository coverage harness runs (vitest + v8)
-Then library sources report 100% coverage
-  And the demo app is excluded from the gate
+Then all runtime library sources report 100% coverage
+  And the demo app and the type-only utils module are excluded from the gate
 
 ### Value (lane V)
 
@@ -264,9 +264,9 @@ Then the page shows "2 users" for the two-user stub response
 
 ## Decisions
 
-- Single package with scoped entry points, mapped by TypeScript path aliases (ADR-001) — Rationale: one package.json, one test run, spec import strings kept as module identities. Rejected: monorepo of packages because per-publish versioning and workspace tooling are not needed for one coherent library.
-- RxJS is an optional peer dependency, imported only by `@paker/adapters/rxjs` (ADR-002) — Rejected: hard dependency because apps without the adapter should never pull RxJS.
-- Inference utilities are defined once in `utils` (the branding-contract owner) and re-exported from each primitive entry so the spec's import strings work verbatim — Rationale: one branding convention to implement, spec-faithful imports. Rejected: per-entry independent definitions because two owners of the same type projection drift apart.
+- Single package with scoped entry points (ADR-0001) — Rationale: one package.json, one test run, spec import strings kept as module identities. Rejected: monorepo of packages because per-publish versioning and workspace tooling are not needed for one coherent library.
+- RxJS is an optional peer dependency, imported only by `@paker/adapters/rxjs` (ADR-0002) — Rejected: hard dependency because apps without the adapter should never pull RxJS.
+- Inference utilities are defined once in `utils` (the branding-contract owner) (ADR-0003) — utils defines the branding contract; every wrapper module (value, store, actions, rxjs adapter) carries its side. Helpers are re-exported from each primitive entry so the spec's import strings work verbatim. Rationale: one branding convention to implement, spec-faithful imports. Rejected: per-entry independent definitions because two owners of the same type projection drift apart.
 - Subscribe notification rule: fires on change, not on attach; skip when the new value is equal to the current by SameValueZero (covers primitives and reference equality) — Rejected: always-notify because `set` with an identical value is not a change; the spec says subscribers "run whenever the value changes".
 - Action apply rule: returning a defined value applies it — next value for `value`, partial patch for `store`; returning nothing never applies; async actions apply after resolution; action methods always return `void` (async actions return `Promise<void>`) — Rejected: typed commit/patch wrapper objects because they add ceremony the spec's factory bodies do not have; Rejected: exposing the applied value as the action return because state observation belongs to subscriptions, not call results.
 - Store whole-state `set` applies per changed key so key-targeted subscribers fire only for keys whose values actually change; whole-store subscribers fire once per property change — Rejected: one bulk notification because it breaks the atomic-subscription guarantee the store promises.
@@ -277,14 +277,16 @@ Then the page shows "2 users" for the two-user stub response
 - Selector-free by construction: atomic property cells, key-targeted subscriptions, and computed cells cover observation needs; no selector API exists — Rationale: feature list "No selectors needed -> emitted by design".
 - Tree-shakability contract: each scoped entry point is side-effect-free on import; the `value` module never imports RxJS (verified by the structure guarantee in Risks) — Rejected: bundle-size assertion tests for now because no bundler harness exists in the repo.
 - 100% coverage gate on library sources, demo app excluded — Rationale: feature "100% test coverage" targets the library contract; demo is example code.
+- Coverage gate scope: runtime library sources must report 100% coverage; the type-only utils module contributes no runtime statements to cover and is excluded, the demo app is excluded; the gate scenario is owned solely by this parent plan — lanes contribute fully covered behavior without ownership claims.
 - SSR is delivered as instance isolation: initializer factories produce fresh per-instance state; the library owns no request scope — apps create per request. Rejected: built-in request-context module because the spec provides none.
 - Middleware absent from this plan entirely — Rejected: reserving abstraction points for middleware because forecasting abstractions violates modular principle 9 (spec marks it post-MVP; a future wrapper module adds it when specced).
+- MCP support and AI-friendly documentation artifacts from the spec feature list are deferred from this round — Rationale: deliverables scoped by the user to library modules plus demo app, mirroring the middleware rejection precedent (post-MVP idea, no current requirement). Rejected: planning docs/MCP artifacts now because it expands scope beyond the approved deliverables.
 
 > Decomposition: all Open Questions below are resolved, so this plan is decomposed into the six lane sub-workplans listed in the Dependency Ledger.
 
 ## Assumptions
 
-- The repository stays one package now; scoped entry points exist as path-mapped module identities (ADR-001). Depends: all lanes' import paths. If wrong (publish as separate packages): entry points must be split into workspace packages; contracts here are package-independent, so behavior survives.
+- The repository stays one package now; scoped entry points exist as path-mapped module identities (ADR-0001). Depends: all lanes' import paths. If wrong (publish as separate packages): entry points must be split into workspace packages; contracts here are package-independent, so behavior survives.
 - Stack: TypeScript, React 19, RxJS 7, vitest + RTL as already declared in `package.json`. Depends: every lane's test plan. If wrong (version upgrades): API contracts here are version-agnostic; only React-bridge internals would need re-check.
 - Spec examples are the normative behavior source: names (`get`, `set`, `setKey`, `getKey`, `subscribe`, `subscribeKey`, `reset`, `getInitial`, `forward`, `skipOn`, `$` cell suffixes) are contractual. Depends: API partial, all scenarios. If wrong (renamed): scenarios and demo examples must be updated together.
 - Hook support on values and stores is the only React integration required; no provider, context, or wrapper component. Depends: V8, S5, demo. If wrong: demo components gain a provider and re-render scoping changes.
@@ -293,7 +295,7 @@ Then the page shows "2 users" for the two-user stub response
 
 ## Risks
 
-- Type-level inference through wrapper chains is the hardest surface to satisfy (U, A, R). Impact: `Infer*` utilities resolve wrong or widen to `any`. Mitigation: branded-type contract defined in U's module; each wrapper lane delivers its own type-level scenarios alongside behavior; U verifies end-to-end composition last (dependency ledger).
+- Type-level inference through wrapper chains is the hardest surface to satisfy (U, A, R). Impact: `Infer*` utilities resolve wrong or widen to `any`. Mitigation: branded-type contract defined in U's module; each wrapper lane delivers its own type-level scenarios alongside behavior; U's scenarios verify the composed wrapper stack end-to-end (dependency ledger).
 - Tree-shaking could silently regress if an entry point imports another module's internals. Impact: RxJS or unused primitives leak into bundles. Mitigation: entry points depend only on other modules' published contracts (API partial), never internals; the value module never imports RxJS; reviewed at module-placement gate.
 - Applying `undefined` is indistinguishable from "no return value" in actions. Impact: cannot intentionally set `value<undefined>` via an action return. Mitigation: documented rule (returning nothing never applies); `set(undefined)` remains available through the direct API.
 - Subscription cleanup misuse: forgetting the returned cleanup in effects. Impact: leaked listeners. Mitigation: the subscribe call returns cleanup and the documented pattern (return in `useEffect`) is a scenario (V4).
@@ -412,7 +414,7 @@ No module is a passthrough: each hides a nameable decision and deleting any boun
 
 - New modules: `value`, `store`, `actions`, `rxjs adapter`, `utils`, `demo app`.
 - No shared mutable state across boundaries: each cell's lifecycle belongs to the instance that created it; wrappers delegate through published contracts and never mutate cells behind a sibling's back. Composition root: the innermost primitive created by the user's factory call is the single owner of state lifecycle.
-- Depends-on (contracts, never concrete internals): `store → value`; `actions → value, store`; `rxjs → value, store, actions`; `utils → branding contract of every wrapper`; `demo → published entry points only`.
+- Depends-on (contracts, never concrete internals): `store → value`; `actions → value, store`; `rxjs → value, store, actions`; utils defines the branding contract; `value, store, actions, rxjs adapter → utils branding contract (type-level only)`; `demo → published entry points only`.
 - Rejected: a shared `core` module below `value` — with a single concrete consumer it would be a passthrough and violates "depend on contracts, not concrete types"; if a second reactive primitive ever appears, extraction gets its own workplan then.
 - Every module is independently testable: lane scenarios exercise only that lane's published contract; cross-lane behavior is proven in the lanes that consume (S, A, R, U, D per the ledger).
 
@@ -420,9 +422,9 @@ No module is a passthrough: each hides a nameable decision and deleting any boun
 
 | Card | Depends on (behavioral prerequisites) | Integration touchpoint | Blocked? |
 |---|---|---|---|
-| `workplan_value.md` (V1–V11) | none — root primitive | consumed by S, A, R, U, D via value contract | unblocked |
-| `workplan_store.md` (S1–S5) | V — value cells observable | property cells appear in A, R, U, D | blocked until V lands |
-| `workplan_actions.md` (A1–A7) | V, S — wrapped primitives observable | decorated instances consumed by R, U, D | blocked until V and S land |
-| `workplan_rxjs.md` (R1–R5) | V, S, A — composed instances observable | composed rxjs-decorated store consumed by U, D | blocked until A (and V, S) land |
-| `workplan_utils.md` (U1–U6) | branding contract defined here; runtime types of V, S, A, R | end-to-end wrapper stack | blocked until A and R land |
-| `workplan_demo.md` (D1–D3) | R (rxjs + actions + store composed) | full stack rendered in components; coverage gate closes | blocked until R and U land |
+| `workplan_value.md` (V1–V11) | none — root primitive; utils branding convention (type-level, authored in workplan_utils.md) | consumed by S, A, R, U, D via value contract | unblocked |
+| `workplan_store.md` (S1–S5) | V — value cells observable; utils branding convention (type-level) | property cells appear in A, R, U, D | blocked until V lands |
+| `workplan_actions.md` (A1–A7) | V, S — wrapped primitives observable; utils branding convention (type-level) | decorated instances consumed by R, U, D | blocked until V and S land |
+| `workplan_rxjs.md` (R1–R5) | V, S, A — composed instances observable; utils branding convention (type-level) | composed rxjs-decorated store consumed by U, D | blocked until A (and V, S) land |
+| `workplan_utils.md` (U1–U6) | none for the convention itself (authored in this card, ADR-0003); composed wrapper types of V, S, A, R for U's proof scenarios | end-to-end wrapper stack | unblocked for convention authoring; U1–U6 proof blocked until A and R land |
+| `workplan_demo.md` (D1–D3) | R (rxjs + actions + store composed) | full stack rendered in components; coverage gate closes | blocked until R lands |

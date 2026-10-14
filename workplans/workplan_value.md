@@ -2,9 +2,9 @@
 
 > Scenario card
 > **Name:** value
-> **Scenarios owned:** parent V1–V11, plus the Coverage gate scenario's value-module slice
+> **Scenarios owned:** parent V1–V11
 > **Contracts exposed:** value cell contract (see API partial) — consumed by store, actions, rxjs adapter, utils, demo
-> **Contracts consumed:** none (root primitive; only React and the language runtime)
+> **Contracts consumed:** utils branding convention (type-level only, authored in workplan_utils.md); runtime: none
 > **Assumptions about siblings:** store will build per-key cells from this contract; actions/adapter will decorate instances of it without changing it; utils will read its branded type; demo will render components calling it as a hook.
 
 ## Goal
@@ -101,7 +101,7 @@ Then getKey("missing") returns 1 and the add notifies key-targeted subscribers f
 - Computed cells are the same cell type with write methods absent at the type level (V7); dependencies are other cells; recomputation happens when any dependency changes. Rejected: explicit `computed(...)` factory — the spec uses the `value(deps, fn)` form.
 - Key operations exist when the state is an array or object; `setKey` produces a new collection without touching the previously-read one (V9); a key added by `setKey` notifies subscribers attached to that previously-absent key (V10, V11); reading an absent key returns `undefined`.
 - React hook form: calling the cell inside a component subscribes for the component lifetime and unmount cleans up automatically (V8). The returned cleanup of `subscribe` is the manual path for effects (V4).
-- The branded type this cell carries is defined by the utils branding contract so `InferValue` reads it through wrappers; value implements its side without importing utils' internals.
+- The branded type this cell carries is defined by the utils branding contract so `InferValue` reads it through wrappers; value implements its side without importing utils' internals (ADR-0003).
 
 ## Assumptions
 
@@ -150,4 +150,4 @@ Functional reactive closures; no domain ceremony — the domain is one cell. Int
 
 ### Boundaries
 
-New module; consumed only through its entry contract by store/actions/adapter/utils/demo; imports no sibling internals; never imports RxJS (ADR-002).
+New module; consumed only through its entry contract by store/actions/adapter/utils/demo; imports no sibling internals; never imports RxJS (ADR-0002).

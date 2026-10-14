@@ -1,6 +1,6 @@
-# ADR-001: Single package with scoped entry points
+# 0001. Single package with scoped entry points
 
-Status: accepted
+**Status**: Accepted
 
 ## Context
 
@@ -8,12 +8,17 @@ The Paker specification shows imports that look like separate packages (`@paker/
 
 ## Decision
 
-Ship one package. The spec's scoped names are treated as module identities: each gets its own side-effect-free entry module, mapped by TypeScript path aliases so every spec example compiles verbatim (`@paker/adapters/rxjs` etc. resolve to the corresponding entry module). One `package.json`, one vitest run, one typecheck.
+We will ship one package. The spec's scoped names are treated as module identities: each gets its own side-effect-free entry module, mapped by TypeScript path aliases so every spec example compiles verbatim (`@paker/adapters/rxjs` etc. resolve to the corresponding entry module). One `package.json`, one vitest run, one typecheck.
 
 ## Consequences
 
-- Positive: minimal tooling; imports match the spec; entry-point boundaries keep the tree-shakable structure honest (no cross-entry internal imports).
-- Negative: if the project later publishes the scoped names as real npm packages, entries must split into workspace packages — the behavioral contracts stay package-independent, so only packaging changes.
+### Positive
+- Minimal tooling; imports match the spec; entry-point boundaries keep the tree-shakable structure honest (no cross-entry internal imports).
+
+### Negative
+- If the project later publishes the scoped names as real npm packages, entries must split into workspace packages — the behavioral contracts stay package-independent, so only packaging changes.
+
+### Neutral
 - Publishing layout is deferred; nothing in this plan depends on a published artifact.
 
 ## Alternatives considered
