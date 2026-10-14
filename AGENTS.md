@@ -9,6 +9,7 @@ Agentic-engineering kit for library-spec-example — placeholders filled for thi
 - Language: TypeScript (TS/TSX; React 19 + RxJS, vitest/RTL test stack)
 - Test command: `npm test` (vitest run)
 - Verify command: `npm run typecheck` (tsc --noEmit)
+- Architecture guard: `npm run lint:arch` (dependency-cruiser — rules in `dependency-cruiser.json`, enforced on pushed diffs once CI exists)
 - CI provider: GitHub Actions (workflow not yet added — watchers in `scripts/` target `gh`)
 - Approved subagent model: `opencode/qwen3.8-flash`
 

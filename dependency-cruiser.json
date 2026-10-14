@@ -1,0 +1,74 @@
+{
+  "$schema": "https://unpkg.com/dependency-cruiser/bundle/latest/dist/schema/config.schema.json",
+  "forbidden": [
+    {
+      "name": "no-circular",
+      "severity": "error",
+      "comment": "Module cycles break contract-only dependencies.",
+      "from": {},
+      "to": { "circular": true }
+    },
+    {
+      "name": "rxjs-confined",
+      "severity": "error",
+      "comment": "RxJS is importable only inside src/adapters/rxjs (ADR-0002).",
+      "from": { "pathNot": "^src/adapters/rxjs/" },
+      "to": { "path": "^node_modules[/\\\\]rxjs([/\\\\]|$)" }
+    },
+    {
+      "name": "value-entry-only",
+      "severity": "error",
+      "comment": "Cross-module imports of value go through its entry point only — no internals.",
+      "from": { "pathNot": "^src/value/" },
+      "to": { "path": "^src/value/", "pathNot": "^src/value/index" }
+    },
+    {
+      "name": "store-entry-only",
+      "severity": "error",
+      "comment": "Cross-module imports of store go through its entry point only — no internals.",
+      "from": { "pathNot": "^src/store/" },
+      "to": { "path": "^src/store/", "pathNot": "^src/store/index" }
+    },
+    {
+      "name": "actions-entry-only",
+      "severity": "error",
+      "comment": "Cross-module imports of actions go through its entry point only — no internals.",
+      "from": { "pathNot": "^src/actions/" },
+      "to": { "path": "^src/actions/", "pathNot": "^src/actions/index" }
+    },
+    {
+      "name": "adapters-rxjs-entry-only",
+      "severity": "error",
+      "comment": "Cross-module imports of the adapter go through its entry point only — no internals.",
+      "from": { "pathNot": "^src/adapters/rxjs/" },
+      "to": { "path": "^src/adapters/rxjs/", "pathNot": "^src/adapters/rxjs/index" }
+    },
+    {
+      "name": "utils-entry-only",
+      "severity": "error",
+      "comment": "Cross-module imports of utils go through its entry point only — no internals.",
+      "from": { "pathNot": "^src/utils/" },
+      "to": { "path": "^src/utils/", "pathNot": "^src/utils/index" }
+    },
+    {
+      "name": "utils-type-only",
+      "severity": "error",
+      "comment": "src/utils is reachable from runtime code via type-only imports exclusively (ADR-0003 branding; zero runtime coupling).",
+      "from": { "path": "^(src|demo)/", "pathNot": "^src/utils/" },
+      "to": { "path": "^src/utils/", "dependencyTypesNot": ["type-only"] }
+    },
+    {
+      "name": "demo-terminal",
+      "severity": "error",
+      "comment": "Nothing imports the demo — it is the leaf integration surface, deletable wholesale.",
+      "from": { "pathNot": "^demo/" },
+      "to": { "path": "^demo/" }
+    }
+  ],
+  "options": {
+    "tsConfig": { "fileName": "tsconfig.json" },
+    "tsPreCompilationDeps": true,
+    "parser": "swc",
+    "doNotFollow": { "path": "^node_modules" }
+  }
+}
