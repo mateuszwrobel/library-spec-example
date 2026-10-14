@@ -2,6 +2,16 @@
 
 Agentic-engineering kit for library-spec-example — placeholders filled for this project; trim sections as the project evolves.
 
+## Project facts
+
+- Repo: `library-spec-example` (owner `mateuszwrobel`, GitHub)
+- Default branch: `main`
+- Language: TypeScript (TS/TSX; React 19 + RxJS, vitest/RTL test stack)
+- Test command: `npm test` (vitest run)
+- Verify command: `npm run typecheck` (tsc --noEmit)
+- CI provider: GitHub Actions (workflow not yet added — watchers in `scripts/` target `gh`)
+- Approved subagent model: `opencode/qwen3.8-flash`
+
 ## Subagents / delegation
 
 ALWAYS delegate execution to subagents. Orchestrator gathers context, plans, delegates — subagents execute. Includes mechanical work: file edits, git setup, renames.
