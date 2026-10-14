@@ -2,7 +2,7 @@
 
 > Scenario card
 > **Name:** value
-> **Scenarios owned:** parent V1–V11
+> **Scenarios owned:** parent V1–V15
 > **Contracts exposed:** value cell contract (see API partial) — consumed by store, actions, rxjs adapter, utils, demo
 > **Contracts consumed:** utils branding convention (type-level only, authored in workplan_utils.md); runtime: none
 > **Assumptions about siblings:** store will build per-key cells from this contract; actions/adapter will decorate instances of it without changing it; utils will read its branded type; demo will render components calling it as a hook.
@@ -94,12 +94,48 @@ Then getKey("theme") returns "light"
 When setKey("missing", 1)
 Then getKey("missing") returns 1 and the add notifies key-targeted subscribers for "missing"
 
+### Scenario: V12 — Deep-path reads
+Given settings$ = value({ user: { address: { city: "KRK" }, tag: "a" } })
+When getKey("user.address.city") is called
+Then it returns "KRK"
+When getKey("user.missing.deep.path") is called
+Then it returns undefined without throwing
+
+### Scenario: V13 — Deep-path write fires leaf and ancestors, siblings stay silent
+Given settings$ as in V12 with subscribers attached to paths "user.address.city", "user.address.zip", "user.tag", and the whole value
+When setKey("user.address.city", "WAW") is called
+Then the "user.address.city" subscriber receives ("WAW", "KRK")
+And the whole-value subscriber fires with (newObject, oldObject)
+And subscribers on "user" and "user.address" fire because the immutable write churns ancestor identities
+And the "user.tag" and "user.address.zip" subscribers are not called
+And the object read before the write still reports city "KRK" — nothing was mutated in place
+When setKey("user.address.city", "WAW") is called again with the same value
+Then no subscriber fires
+And get() still returns the untouched original reference
+
+### Scenario: V14 — Deep-path write creates missing intermediates and traverses primitives
+Given settings$ = value({ user: {}, tag: "a" })
+When setKey("user.address.city", "WAW") is called
+Then getKey("user.address.city") returns "WAW"
+And the intermediate address object was created
+And whole-value subscribers fire exactly once
+When setKey("tag.deep", 1) is called where tag holds the primitive "a"
+Then the primitive is replaced by { deep: 1 } along the write path
+
+### Scenario: V15 — Index segments in paths address array items
+Given orders$ = value([{ items: [{ sku: "A" }] }])
+When setKey("0.items.0.sku", "B") is called
+Then getKey("0.items.0.sku") returns "B"
+And the orders$ whole-value subscriber fires once
+And the item previously read via get() still reports sku "A"
+
 ## Decisions
 
 - Notification rule: subscribers fire on change only; an attach never delivers immediately; equality skip by SameValueZero (parent decision, restated here because this module enforces it). Rejected: emit-on-subscribe — it duplicates the hook read and complicates effect logic.
 - `previousValue` in notifications is the previously-emitted value; the first emission after creation reports the initial value as `previousValue`. Rationale: matches V2's (5, 0) witness and gives subscribers the actual before/after pair.
 - Computed cells are the same cell type with write methods absent at the type level (V7); dependencies are other cells; recomputation happens when any dependency changes. Rejected: explicit `computed(...)` factory — the spec uses the `value(deps, fn)` form.
 - Key operations exist when the state is an array or object; `setKey` produces a new collection without touching the previously-read one (V9); a key added by `setKey` notifies subscribers attached to that previously-absent key (V10, V11); reading an absent key returns `undefined`.
+- Deep paths per the parent decision: dot-delimited segments; numeric segment over an array is an index (V15); a deep write fires subscribers on the leaf AND every ancestor path (ancestor identity churn is the firing signal) while siblings and untouched ancestors stay silent (V13); missing intermediates are created, primitives met mid-path are replaced by containers on write (V14); missing-path reads return `undefined` without throwing (V12); an equal-value leaf write is a silent no-op — no notification, no new references anywhere (V13 last steps); path strings carry no compile-time validation and literal-dot keys are unreachable via path form.
 - React hook form: calling the cell inside a component subscribes for the component lifetime and unmount cleans up automatically (V8). The returned cleanup of `subscribe` is the manual path for effects (V4).
 - The branded type this cell carries is defined by the utils branding contract so `InferValue` reads it through wrappers; value implements its side without importing utils' internals (ADR-0003).
 

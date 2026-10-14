@@ -99,6 +99,41 @@ Then getKey("theme") returns "light"
 When setKey("missing", 1)
 Then getKey("missing") returns 1 and the add notifies key-targeted subscribers for "missing"
 
+### Scenario: V12 — Deep-path reads
+Given settings$ = value({ user: { address: { city: "KRK" }, tag: "a" } })
+When getKey("user.address.city") is called
+Then it returns "KRK"
+When getKey("user.missing.deep.path") is called
+Then it returns undefined without throwing
+
+### Scenario: V13 — Deep-path write fires leaf and ancestors, siblings stay silent
+Given settings$ as in V12 with subscribers attached to paths "user.address.city", "user.address.zip", "user.tag", and the whole value
+When setKey("user.address.city", "WAW") is called
+Then the "user.address.city" subscriber receives ("WAW", "KRK")
+And the whole-value subscriber fires with (newObject, oldObject)
+And subscribers on "user" and "user.address" fire because the immutable write churns ancestor identities
+And the "user.tag" and "user.address.zip" subscribers are not called
+And the object read before the write still reports city "KRK" — nothing was mutated in place
+When setKey("user.address.city", "WAW") is called again with the same value
+Then no subscriber fires
+And get() still returns the untouched original reference
+
+### Scenario: V14 — Deep-path write creates missing intermediates and traverses primitives
+Given settings$ = value({ user: {}, tag: "a" })
+When setKey("user.address.city", "WAW") is called
+Then getKey("user.address.city") returns "WAW"
+And the intermediate address object was created
+And whole-value subscribers fire exactly once
+When setKey("tag.deep", 1) is called where tag holds the primitive "a"
+Then the primitive is replaced by { deep: 1 } along the write path
+
+### Scenario: V15 — Index segments in paths address array items
+Given orders$ = value([{ items: [{ sku: "A" }] }])
+When setKey("0.items.0.sku", "B") is called
+Then getKey("0.items.0.sku") returns "B"
+And the orders$ whole-value subscriber fires once
+And the item previously read via get() still reports sku "A"
+
 ### Store (lane S)
 
 ### Scenario: S1 — Property cells are full value primitives
@@ -132,6 +167,14 @@ Given a component calling userStore$() and a component calling userStore$.counte
 When data$ changes only
 Then the whole-store component re-renders
   And the counter-only component does not
+
+### Scenario: S6 — Deep paths through store property cells
+Given userStore$ = store with { data: [u1, u2], counter: 0 }, u1 = { id: 1, profile: { city: "KRK" } }, and subscribers attached to data$, counter$, and the whole store
+When userStore$.data$.setKey("0.profile.city", "WAW") is called
+Then the data$ subscriber fires with (newArray, oldArray)
+And the counter$ subscriber is not called
+And the whole-store subscriber fires exactly once
+And userStore$.data$.getKey("0.profile.city") returns "WAW"
 
 ### Actions (lane A)
 
@@ -275,6 +318,7 @@ Then the page shows "2 users" for the two-user stub response
 - `forward` (actions and adapter) is restricted to names declared by the same factory, with original parameter/payload types (A5, R2, U5) — no runtime guards; event and action methods are plain callable methods, type-checked at compile time.
 - Values and stores are callable as React hooks; effect subscriptions return their cleanup (V8, S5) — this is the standardized React integration; no provider or context is required.
 - Selector-free by construction: atomic property cells, key-targeted subscriptions, and computed cells cover observation needs; no selector API exists — Rationale: feature list "No selectors needed -> emitted by design".
+- Key operations (getKey/setKey/subscribeKey) address nested data with dot-delimited paths: "user.address.city", "0.items.0.sku". Rationale: user decision 2026-10-14 expanding the spec's one-level key ops to paths (spec examples remain a subset). Behavior set: leaf + every ancestor path subscriber fires on a deep write (immutable writes churn ancestor identities), sibling paths and untouched ancestors stay silent; missing-path read returns undefined without throwing; writes create missing intermediate containers and replace primitives met mid-path with containers; a leaf write of an equal value is a silent no-op leaving every reference untouched. Paths are plain strings — no compile-time path validation; keys containing literal dots are unreachable via path form (direct one-level key form still addresses them). Data classes stay spec-only (primitives, arrays, plain objects); Map/Set/class instances remain opaque generic values with no dedicated path semantics. Notification stays identity-based: a structurally-equal new reference notifies. Rejected: deep-equality dedupe (cost + opinionated); rejected: escaped/path-array key forms (expands surface beyond the chosen syntax).
 - Tree-shakability contract: each scoped entry point is side-effect-free on import; the `value` module never imports RxJS (verified by the structure guarantee in Risks) — Rejected: bundle-size assertion tests for now because no bundler harness exists in the repo.
 - Coverage gate scope: runtime library sources must report 100% coverage; the type-only utils module contributes no runtime statements to cover and is excluded, the demo app is excluded; the gate scenario is owned solely by this parent plan — lanes contribute fully covered behavior without ownership claims. — Rationale: feature "100% test coverage" targets the library contract; demo and type-only code are not contract surface.
 - SSR is delivered as instance isolation: initializer factories produce fresh per-instance state; the library owns no request scope — apps create per request. Rejected: built-in request-context module because the spec provides none.
@@ -299,6 +343,7 @@ Then the page shows "2 users" for the two-user stub response
 - Applying `undefined` is indistinguishable from "no return value" in actions. Impact: cannot intentionally set `value<undefined>` via an action return. Mitigation: documented rule (returning nothing never applies); `set(undefined)` remains available through the direct API.
 - Subscription cleanup misuse: forgetting the returned cleanup in effects. Impact: leaked listeners. Mitigation: the subscribe call returns cleanup and the documented pattern (return in `useEffect`) is a scenario (V4).
 - Advanced generic inference is error-prone for small implementation models. Impact: lane U or wrapper branding mis-implemented. Mitigation: lane workplans carry self-contained type contracts; verification includes compile-time failing-name scenarios (U5, A5, R2).
+- Unvalidated string paths mean a typo reads `undefined` silently. Impact: wrong-path bugs stay invisible until a feature misbehaves. Mitigation: V12 pins the undefined-no-throw contract; typo'd `setKey` paths visibly add the bogus branch under immutable updates, so witness tests catch drift early.
 
 ## Open Questions
 
@@ -324,9 +369,9 @@ Each primitive entry also re-exports its own helpers from `utils` so the spec's 
 
 #### `@paker/value`
 - Accepts: initial value; or an initializer function producing per-instance state; or a computed form of (dependency cells, derive function).
-- Returns: a cell — `get()`, `getInitial()`, `set(nextOrUpdater)`, `reset()`, `subscribe((current, previous))` returning cleanup, `getKey(keyOrIndex)`, `setKey(keyOrIndex, next)`, `subscribeKey(key, (current, previous))` returning cleanup, callable as a React hook.
+- Returns: a cell — `get()`, `getInitial()`, `set(nextOrUpdater)`, `reset()`, `subscribe((current, previous))` returning cleanup, `getKey(pathOrKey)`, `setKey(pathOrKey, next)`, `subscribeKey(pathOrKey, (current, previous))` returning cleanup — where `pathOrKey` is a direct key/index or a dot-delimited nested path — callable as a React hook.
 - Fails: compile-time rejection of `set`/`setKey`/`reset` on computed cells.
-- Guarantees: per-instance state isolation; notification on change only (SameValueZero skip); equal-value sets never notify; subscribers receive current with previously-emitted value.
+- Guarantees: per-instance state isolation; notification on change only (SameValueZero skip); equal-value sets never notify; subscribers receive current with previously-emitted value. Deep writes fire the leaf and every ancestor subscriber, stay silent for siblings; equal-value leaf writes never notify and never churn references.
 
 #### `@paker/store`
 - Accepts: state object; or initializer function producing per-instance state.
@@ -421,8 +466,8 @@ No module is a passthrough: each hides a nameable decision and deleting any boun
 
 | Card | Depends on (behavioral prerequisites) | Integration touchpoint | Blocked? |
 |---|---|---|---|
-| `workplan_value.md` (V1–V11) | none — root primitive; utils branding convention (type-level, authored in workplan_utils.md) | consumed by S, A, R, U, D via value contract | unblocked |
-| `workplan_store.md` (S1–S5) | V — value cells observable; utils branding convention (type-level) | property cells appear in A, R, U, D | blocked until V lands |
+| `workplan_value.md` (V1–V15) | none — root primitive; utils branding convention (type-level, authored in workplan_utils.md) | consumed by S, A, R, U, D via value contract | unblocked |
+| `workplan_store.md` (S1–S6) | V — value cells observable; utils branding convention (type-level) | property cells appear in A, R, U, D | blocked until V lands |
 | `workplan_actions.md` (A1–A7) | V, S — wrapped primitives observable; utils branding convention (type-level) | decorated instances consumed by R, U, D | blocked until V and S land |
 | `workplan_rxjs.md` (R1–R5) | V, S, A — composed instances observable; utils branding convention (type-level) | composed rxjs-decorated store consumed by U, D | blocked until A (and V, S) land |
 | `workplan_utils.md` (U1–U6) | none for the convention itself (authored in this card, ADR-0003); composed wrapper types of V, S, A, R for U's proof scenarios | end-to-end wrapper stack | unblocked for convention authoring; U1–U6 proof blocked until A and R land |

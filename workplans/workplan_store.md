@@ -2,7 +2,7 @@
 
 > Scenario card
 > **Name:** store
-> **Scenarios owned:** parent S1–S5
+> **Scenarios owned:** parent S1–S6
 > **Contracts exposed:** store contract (see API partial) — consumed by actions, rxjs adapter, utils, demo
 > **Contracts consumed:** value cell contract (V) — per-key cells are values; utils branding convention (type-level only)
 > **Assumptions about siblings:** value cells deliver change-only notifications with per-key firing semantics; actions will receive this store's property cells directly in its factory argument; adapter/utils read the same property cells.
@@ -45,6 +45,14 @@ When data$ changes only
 Then the whole-store component re-renders
   And the counter-only component does not
 
+### Scenario: S6 — Deep paths through store property cells
+Given userStore$ = store with { data: [u1, u2], counter: 0 }, u1 = { id: 1, profile: { city: "KRK" } }, and subscribers attached to data$, counter$, and the whole store
+When userStore$.data$.setKey("0.profile.city", "WAW") is called
+Then the data$ subscriber fires with (newArray, oldArray)
+And the counter$ subscriber is not called
+And the whole-store subscriber fires exactly once
+And userStore$.data$.getKey("0.profile.city") returns "WAW"
+
 ## Decisions
 
 - Property access naming: each state property `k` is exposed as `k$` (spec's `counter$`, `data$`), each a full value cell (S1). Rejected: raw property names — they would collide with the whole-state methods and lose the cell identity.
@@ -53,6 +61,7 @@ Then the whole-store component re-renders
 - Initializer form mirrors value (per-instance fresh state), enabling SSR/test isolation (S1 witness uses the initializer form).
 - `reset` restores every property to initial (S4); `getInitial` returns the complete initial state object at any time.
 - Store notification pairs reported as plain state snapshots (not cell tuples) because the store's own subscribers observe whole state; the per-key tuples remain owned by the value cells.
+- Deep path operations through property cells follow value's path rules (V12–V15); a path write inside one property notifies the whole-store subscriber exactly once per property change — path fan-out inside the cell does not multiply store-level notifications (S6).
 
 ## Assumptions
 

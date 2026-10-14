@@ -54,6 +54,7 @@ Then each returns identical inferred types
 - Computed cells infer their derived data type via `InferValue` (U1 witness `total$` → number).
 - Helpers are re-exported from each primitive entry so the spec's import strings compile verbatim (parent decision restated).
 - Type-level acceptance: every wrong usage must fail compilation and every expected resolution must be pinned exactly; the mechanism for asserting compile-failure (a compile-error harness or per-line compile-error directives) is the implementer's choice — the behavioral guarantee is what this plan binds.
+- Key-operation paths are plain strings with no static segment validation; `Infer*` helpers do not type path shapes — the generic data class is carried by the value/state projections only. Rationale: spec data classes stay primitives/arrays/objects; path-type projection beyond the spec's own examples would forecast type surface no scenario observes. Rejected: template-literal path typing (expands the branded type contract with no witness demand).
 
 ## Assumptions
 

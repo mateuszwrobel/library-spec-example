@@ -3,7 +3,7 @@
 ```json
 {
   "task": "paker-workplan-nested-key-paths",
-  "status": "in-progress",
+  "status": "done",
   "links": ["workplans/workplan_paker_library.md", "workplans/workplan_value.md", "workplans/workplan_store.md"],
   "date": "2026-10-14"
 }
