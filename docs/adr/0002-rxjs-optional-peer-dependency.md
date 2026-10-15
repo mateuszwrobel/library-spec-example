@@ -8,7 +8,7 @@ The spec makes RxJS an optional integration: "optional RxJS integration", first-
 
 ## Decision
 
-We will confine RxJS imports to `@paker/adapters/rxjs` — the only module allowed to import it. RxJS is declared as an optional peer dependency for consumers; within this repository it stays a devDependency used by adapter code paths, tests, and demo. No other module references RxJS types or operators.
+We will confine RxJS imports to `@paker/adapters/rxjs` — the only library runtime module allowed to import it. No other module under `src/` references RxJS types or operators; the library's runtime graph stays RxJS-free outside the adapter. App and userland code that composes the adapter — including this repository's demo — imports RxJS operators directly, as the spec's examples show; the confinement guards the library, not consumers' composition of adapter pipelines. RxJS is declared as an optional peer dependency for consumers; within this repository it stays a devDependency used by adapter code paths, tests, and demo.
 
 ## Consequences
 

@@ -53,6 +53,8 @@ Then state, action, subscription, and hook APIs behave as unwrapped
 - Concurrent same-event calls are independent runs (R4); no automatic dedupe or switchMap-between-runs policy — the author composes that inside the array if wanted. Rejected: built-in latest-wins — an opinion the spec doesn't state.
 - Only this module imports RxJS (ADR-0002); `InferEvents`/`InferEventPayload` type projections must contain no RxJS types.
 - Forward-using event factories declare an explicit event-map return annotation (parent decision, 2026-10-15: same intrinsic inference cycle as actions); non-forward factories infer without annotations.
+- skipOn arm moment (verification WARN-2, recorded 2026-10-15; parent decision): the terminator arms when a value passes its stage (position-scoped per run) — an event emission BEFORE the stream reaches skipOn's position does not affect that run; consistent with per-run independence and the non-affectation clause of R4.
+- Adapter error policy (verification WARN-2, recorded 2026-10-15; parent decision): a mid-run error terminates that run silently (no result handle exists — event methods return void); authors needing error semantics compose `catchError` within the operator array. No retry/revert invented (spec silent).
 
 ## Assumptions
 

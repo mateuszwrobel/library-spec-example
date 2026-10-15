@@ -11,8 +11,8 @@
     {
       "name": "rxjs-confined",
       "severity": "error",
-      "comment": "RxJS is importable only inside src/adapters/rxjs (ADR-0002).",
-      "from": { "pathNot": "^src/adapters/rxjs/" },
+      "comment": "No library runtime module outside the adapter imports RxJS (ADR-0002); demo/userland composes adapter pipelines with rxjs operators directly, as the spec examples show.",
+      "from": { "pathNot": "^src/adapters/rxjs/|^demo/" },
       "to": { "path": "^node_modules[/\\\\]rxjs([/\\\\]|$)" }
     },
     {
