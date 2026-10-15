@@ -52,6 +52,7 @@ Then state, action, subscription, and hook APIs behave as unwrapped
 - Event methods return `void`; observation happens through the wrapped primitive's subscriptions (no selector, no result handle). Rejected: returning the run's Observable — leaks RxJS into the API surface for consumers outside this adapter.
 - Concurrent same-event calls are independent runs (R4); no automatic dedupe or switchMap-between-runs policy — the author composes that inside the array if wanted. Rejected: built-in latest-wins — an opinion the spec doesn't state.
 - Only this module imports RxJS (ADR-0002); `InferEvents`/`InferEventPayload` type projections must contain no RxJS types.
+- Forward-using event factories declare an explicit event-map return annotation (parent decision, 2026-10-15: same intrinsic inference cycle as actions); non-forward factories infer without annotations.
 
 ## Assumptions
 

@@ -429,3 +429,24 @@ describe("error behavior — throws propagate, nothing applies (lane decision)",
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+describe("collision decision — action names shadow the copied wrapped surface", () => {
+  it("an action named get shadows the wrapped get on the decorated copy while the wrapped primitive's own get stays untouched", () => {
+    const inner$ = value(0);
+    const decorated$ = actions(inner$, (v$) => ({
+      get: () => v$.get() + 100, // reads through the untouched primitive, returns a next value
+    }));
+    const spy = vi.fn();
+    inner$.subscribe(spy);
+
+    // The decorated copy's `get` member is the bound action, not the wrapped read.
+    expect(decorated$.get).not.toBe(inner$.get);
+    expect(decorated$.get()).toBeUndefined(); // runs the action: apply protocol, method result void
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(100, 0);
+
+    // The wrapped primitive itself is untouched — its own get keeps original read semantics.
+    expect(inner$.get()).toBe(100);
+    expect(spy).toHaveBeenCalledTimes(1); // reading never notifies — no action ran through it
+  });
+});

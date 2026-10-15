@@ -60,9 +60,11 @@ Then it is a compile-time failure
 - Apply rule (restates parent for this lane): a returned defined value applies once — next value for a value-wrapped primitive, partial patch for a store-wrapped one; a returned nothing never applies, so direct writes are the mutation path and exactly one notification results (A2, A3, A4). Rejected: typed commit wrappers — spec factory bodies have none.
 - Action methods always return `void`; async ones return `Promise<void>` resolving after the result is applied (A6). Observation of results happens through subscriptions. Rejected: returning the applied value — double signal path.
 - Async apply ordering: pre-resolution state is untouched and subscribers silent; the promise returned by the method completes after the commit (A6). Rejected: optimistic apply — spec says results commit "after the promise resolves".
-- `forward` is a same-factory-only surface with original parameter types (A5); calling a forwarded void action from a value action returns nothing, so the outer action commits nothing extra — composition runs through the inner action's own apply (A5 witness: `incrementBy` delegates fully to `setCounter`).
+- `forward` is a same-factory-only surface with original parameter types (A5); calling a forwarded void action from a value action returns nothing, so the outer action commits nothing extra — composition runs through the inner action's own apply (A5 witness: `incrementBy` delegates fully to `setCounter`). Forward-using factories pin the action map with a return annotation (parent decision); non-forward factories infer precisely with zero annotations. An unpinned forward-using factory fails LOUDLY (map resolves to `{}`, call sites error) — never silently widened.
 - Store patches apply through whole-state setter semantics while preserving per-key firing (S2 contract consumed): a patch touching only `data` notifies `data$`, not `counter$` (A4).
 - Errors thrown inside an action propagate synchronously; an async action's rejection propagates through the returned `Promise<void>` without applying anything. No retry or error-state modeling (not in spec).
+- Action names colliding with wrapped-API members shadow the copied surface of the decorated instance; the wrapped primitive itself is untouched. Collision witness pinned in tests.
+- Async detection is native-Promise-only (`instanceof Promise`); a non-Promise thenable returned from an action commits as an ordinary value. In-spec usage (`async` factories) always returns native Promises.
 
 ## Assumptions
 
@@ -88,7 +90,7 @@ Then it is a compile-time failure
 
 ### Contract
 
-As parent API partial §`@paker/actions` — accepts a value or store plus an action factory receiving (primitive-cells, forward); returns wrapped API plus per-action methods returning void/Promise<void>; compile-time name/parameter checks; apply protocol per Decisions.
+As parent API partial §`@paker/actions` — accepts a value or store plus an action factory receiving (primitive-cells, forward); factories that use `forward` carry an explicit action-map return annotation; returns wrapped API plus per-action methods returning void/Promise<void>; compile-time name/parameter checks; apply protocol per Decisions.
 
 ## Modularity
 
