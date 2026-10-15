@@ -3,14 +3,13 @@ import { store } from "@paker/store";
 import type { UserState } from "./types";
 
 /**
- * D2 — the spec's store example: one decorated store, two components.
- * WholeStoreComponent uses the whole-store hook; AtomicStoreComponent uses
- * only the counter property hook (S5 scoping). The atomic component's user
- * count is a non-reactive `data$.get()` read — it renders what the data says
- * at render time but never subscribes, which is exactly what makes its
- * re-renders counter-scoped (see the store test's render-commit witness).
- * The factory never calls `forward`, so it infers with no annotation
- * (parent ruling 2026-10-15).
+ * D2 — the spec's store example: one decorated store, the spec's two
+ * components plus the demo's scoping witness. WholeStoreComponent uses the
+ * whole-store hook; AtomicStoreComponent is spec-verbatim — atomic means
+ * per-property subscriptions (counter$ and data$ both as hooks), not the
+ * absence of them. CounterOnlyComponent is the S5 scoping leg: a single
+ * property-cell subscriber. The factory never calls `forward`, so it infers
+ * with no annotation (parent ruling 2026-10-15).
  */
 
 export const userStore$ = actions(store<UserState>(() => ({ data: [], counter: 0 })), (cells$) => ({
@@ -26,7 +25,14 @@ export function WholeStoreComponent() {
 
 export function AtomicStoreComponent() {
   const counter = userStore$.counter$();
-  return <p>{`Atomic: ${counter} (${userStore$.data$.get().length} users)`}</p>;
+  const users = userStore$.data$();
+  return <p>{`Atomic: ${counter} (${users.length} users)`}</p>;
+}
+
+/** counter-only subscriber — S5 scoping leg (demo witness, one property hook). */
+export function CounterOnlyComponent() {
+  const counter = userStore$.counter$();
+  return <p>{`Counter only: ${counter}`}</p>;
 }
 
 export function StorePage() {
@@ -38,6 +44,7 @@ export function StorePage() {
       </button>
       <WholeStoreComponent />
       <AtomicStoreComponent />
+      <CounterOnlyComponent />
     </div>
   );
 }
