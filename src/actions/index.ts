@@ -1,9 +1,16 @@
+import type { InferActionParameters, InferActions, InferActionResult } from "@paker/utils";
 import type { Store } from "@paker/store";
 import type { ValueCell } from "@paker/value";
 import { createActions } from "./actions";
 import type { ActionFactory, AnyAction, DecoratedStore, DecoratedValue } from "./types";
 
 export type { ActionFactory, ActionsSurface, AnyAction, DecoratedStore, DecoratedValue } from "./types";
+
+/**
+ * Spec-faithful import strings (ADR-0003): the action projections are owned
+ * by utils and re-exported here.
+ */
+export type { InferActionParameters, InferActions, InferActionResult };
 
 /**
  * The actions decorator (workplan_actions.md). Two primitive forms, resolved
@@ -30,8 +37,8 @@ export type { ActionFactory, ActionsSurface, AnyAction, DecoratedStore, Decorate
  * (or `Promise<void>` resolving after the commit for async actions, A6),
  * passes the inner brand through (ADR-0003), and rejects unknown names or
  * wrong parameter types at compile time (A7). `InferActions`,
- * `InferActionParameters` and `InferActionResult` re-exports land here from
- * utils once the helper projections exist (ADR-0003).
+ * `InferActionParameters` and `InferActionResult` are re-exported from this
+ * entry, owned by utils (ADR-0003).
  */
 export function actions<T, A extends { [K in keyof A]: AnyAction }>(
   primitive: ValueCell<T>,

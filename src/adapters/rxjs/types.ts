@@ -1,4 +1,5 @@
 import type { OperatorFunction } from "rxjs";
+import type { EventsBrand } from "@paker/utils";
 
 /**
  * One stage of an event pipeline — an RxJS operator function, untyped across
@@ -76,6 +77,9 @@ export type EventFactory<P, E extends { [K in keyof E]: AnyEvent }> = (
  * An instance decorated with typed event pipelines: the wrapped API in full
  * — cells, actions, subscriptions, hook calls (R5) — with `Brand<TData>`
  * passed through structurally (ADR-0003), plus one `void` event method per
- * declared event.
+ * declared event and the event-map brand (`EventsBrand`, ADR-0003) so
+ * `InferEvents` reads the surface wrapper-transparently. The brand carries
+ * only the pure `void` method surface — no RxJS type is reachable through it
+ * (ADR-0002).
  */
-export type DecoratedEvents<P, E> = P & EventSurface<E>;
+export type DecoratedEvents<P, E> = P & EventSurface<E> & EventsBrand<EventSurface<E>>;

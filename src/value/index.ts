@@ -1,4 +1,4 @@
-import type { Brand } from "@paker/utils";
+import type { Brand, InferValue } from "@paker/utils";
 import { createValueCell } from "./cell";
 import type { DepCell } from "./computed";
 import { createComputedCell } from "./computed";
@@ -14,6 +14,9 @@ export type {
   ValueCell,
   WriteApi,
 } from "./types";
+
+/** Spec-faithful import string (ADR-0003): `InferValue` is owned by utils. */
+export type { InferValue };
 
 /** Inner data types of a dependency-cell tuple, read through the brand. */
 type DerivedValues<D extends readonly Brand<unknown>[]> = {

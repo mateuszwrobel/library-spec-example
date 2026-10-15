@@ -1,3 +1,4 @@
+import type { ActionsBrand } from "@paker/utils";
 import type { Store } from "@paker/store";
 import type { ValueCell } from "@paker/value";
 
@@ -43,13 +44,17 @@ export type ActionFactory<P, A extends { [K in keyof A]: AnyAction }> = (
 
 /**
  * A value cell decorated with actions: the full ValueCell API unchanged (A1),
- * Brand<T> passed through (ADR-0003), plus the typed action surface.
+ * Brand<T> passed through (ADR-0003), plus the typed action surface — and the
+ * action-map brand (`ActionsBrand`, ADR-0003) so `InferActions` reads this
+ * surface wrapper-transparently at any further wrapper depth.
  */
-export type DecoratedValue<T, A> = ValueCell<T> & ActionsSurface<A>;
+export type DecoratedValue<T, A> = ValueCell<T> & ActionsSurface<A> & ActionsBrand<ActionsSurface<A>>;
 
 /**
  * A store decorated with actions: the full Store API unchanged — whole-state
  * ops and property cells (A1), Brand<S> passed through (ADR-0003), plus the
- * typed action surface.
+ * typed action surface and the action-map brand (as in DecoratedValue).
  */
-export type DecoratedStore<S extends object, A> = Store<S> & ActionsSurface<A>;
+export type DecoratedStore<S extends object, A> = Store<S> &
+  ActionsSurface<A> &
+  ActionsBrand<ActionsSurface<A>>;

@@ -1,4 +1,4 @@
-import type { Brand } from "@paker/utils";
+import type { Brand, InferEventPayload, InferEvents } from "@paker/utils";
 import type { EventRecord, LooseKit } from "./events";
 import { createEvents } from "./events";
 import type { AnyEvent, DecoratedEvents, EventFactory } from "./types";
@@ -12,6 +12,12 @@ export type {
   EventSurface,
   ForwardSurface,
 } from "./types";
+
+/**
+ * Spec-faithful import strings (ADR-0003): the event projections are owned by
+ * utils and re-exported here; their resolutions never mention RxJS types.
+ */
+export type { InferEventPayload, InferEvents };
 
 /**
  * The RxJS event decorator (workplan_rxjs.md). Accepts a value cell, a store,
@@ -41,9 +47,9 @@ export type {
  * `rxjs-confined`). Factories that touch `forward`/`skipOn` pin the event map
  * with a return annotation (parent ruling, 2026-10-15 — the same inference
  * cycle as actions factories); factories that never touch the kit infer
- * without annotations. `InferEvents` and `InferEventPayload` re-exports land
- * here from utils once the helper projections exist (ADR-0003) — no RxJS
- * types may appear in their resolutions.
+ * without annotations. `InferEvents` and `InferEventPayload` are re-exported
+ * from this entry, owned by utils (ADR-0003); their resolutions never mention
+ * RxJS types.
  */
 export function rxjs<P extends Brand<unknown>, E extends { [K in keyof E]: AnyEvent }>(
   primitive: P,

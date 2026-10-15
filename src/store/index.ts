@@ -1,7 +1,11 @@
+import type { InferState } from "@paker/utils";
 import type { Store } from "./types";
 import { createStore } from "./store";
 
 export type { Store } from "./types";
+
+/** Spec-faithful import string (ADR-0003): `InferState` is owned by utils. */
+export type { InferState };
 
 /**
  * The object-state store factory (workplan_store.md). Two forms, mirroring
@@ -17,8 +21,8 @@ export type { Store } from "./types";
  * change, while property hooks stay scoped to their key (S5). Whole-store
  * `set` replaces the entire state, applied per changed key — equal-valued
  * keys stay silent at every level (S2); patch semantics belong to the
- * actions lane's apply protocol, not here. `InferState` re-exports land
- * here from utils once the helper projections exist (ADR-0003).
+ * actions lane's apply protocol, not here. `InferState` is re-exported from
+ * this entry, owned by utils (ADR-0003).
  */
 export function store<T extends object>(stateOrInitializer: T | (() => T)): Store<T> {
   return createStore<T>(
