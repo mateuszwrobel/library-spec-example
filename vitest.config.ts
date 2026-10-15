@@ -6,6 +6,7 @@ export default defineConfig({
       "@paker/value": "/src/value/index.ts",
       "@paker/store": "/src/store/index.ts",
       "@paker/actions": "/src/actions/index.ts",
+      "@paker/adapters/rxjs": "/src/adapters/rxjs/index.ts",
       "@paker/utils": "/src/utils/index.ts",
     },
   },
