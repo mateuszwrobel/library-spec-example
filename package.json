@@ -8,7 +8,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "coverage": "vitest run --coverage",
-    "lint:arch": "depcruise --config dependency-cruiser.json ."
+    "lint:arch": "depcruise --config dependency-cruiser.json .",
+    "demo:dev": "vite -c demo/vite.config.ts"
   },
   "devDependencies": {
     "@swc/core": "^1.16.18",
